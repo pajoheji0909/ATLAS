@@ -21,7 +21,7 @@ ros::Publisher bt_pub("controller_xy", &joystickV);
 */
 SoftwareSerial btSerial(bluetoothTX, bluetoothRX);
 
-float btData;
+byte btData[3];
 
 void setup() {
   // put your setup code here, to run once:
@@ -30,6 +30,7 @@ void setup() {
   pinMode(sw, INPUT);
   pinMode(Vx, INPUT);
   pinMode(Vy, INPUT);
+  pinMode(9, INPUT);
   digitalWrite(sw, HIGH);
   /*
   nh.initNode();
@@ -41,17 +42,22 @@ void readJoystick() {
   sw_press = digitalRead(sw);//reads whether joystick has been pressed down (selected) or not
   x= analogRead(Vx);//reads the X-coordinate value
   y= analogRead(Vy);//reads the Y-coordinate value
-  btData = x+0.0001*y; // 1234.5678 -> 1234 x, 5678 y value
-  joystickV.data = btData;
+  int tmp =0;
+  if (sw_press == 1) tmp = 1 ; 
+    else tmp = -1;    
+  btData[0] = sw_press;
+  btData[1] = x;
+  btData[2] = y;
+  //joystickV.data = btData;
 }
 
-void btSend() {
+void btSend(int n) {
   if (btSerial.available()) {
-    btSerial.print(btData);
-    btSerial.println(" is input");
+    btSerial.write(btData[n]);
   }
   else
     btSerial.println("Bluetooth Communitcation is Unstable");
+  delay(50);
 }
 
 void loop() {
@@ -63,11 +69,16 @@ void loop() {
   Serial.println(y);//prints the Y-coordinate
   Serial.print (" Pressed: ");
   Serial.println(sw_press);//prints whether joystick knob has been pressed or not
-  btSend();
+  Serial.print("Yellow Switch ");
+  int tmp  = digitalRead(9);
+  Serial.println(tmp);
+  delay(300);
+  for (int i = 0; i < 3 ; i ++) {
+  //btSend(i);
+  }
   /*
   bt_pub.publish(&joystickV);
   nh.spinOnce();
   */
-  delay(100);
 }
 
