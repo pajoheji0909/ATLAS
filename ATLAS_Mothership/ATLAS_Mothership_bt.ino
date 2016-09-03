@@ -1,26 +1,27 @@
 //#include <ArduinoHardware.h>
 #include <ros.h>
 #include <sensor_msgs/ChannelFloat32.h>
+#include <std_msgs/UInt16.h>
 #include <SoftwareSerial.h>
+#include <TinyGPS.h>
 #include <Servo.h>
-#include <tinyGPS.h>
 typedef enum pins {bt_tx = 2, bt_rx, IN1, IN2, IN3, IN4, mA_EN, sd1,sd2,sc,mB_EN  };
-//                        2     ~3       4           ~5           ~6         7    8     ~9   ~10  ~11  12   13
+//                        2     ~3         ~5   ~6  sc not using    7    8     ~9   ~10  ~11  12   13
 #define sonic1_tr A0
 #define sonic1_ec A1
 #define sonic2_tr A2
 #define sonic2_ec A3
 
 SoftwareSerial btSerial(bt_tx, bt_rx);
-Servo servo_door1, servo_door2, servo_camera;
+Servo servo_door1, servo_door2;
 
 ros::NodeHandle  nh;
 sensor_msgs::ChannelFloat32 sonics_msg;
 ros::Publisher sonicArr("UltraSonic_Sensors Distance", &sonics_msg);
 
-byte btData[3];
+int btData[3];
 
-void sonicRead();
+//void sonicRead();
 void btRead();
 void motorControl();
 
@@ -39,10 +40,9 @@ void setup() {
   digitalWrite(mB_EN, LOW);
   servo_door1.attach(sd1);
   servo_door2.attach(sd2);
-  servo_camera.attach(sc);
   btSerial.begin(9600);
 }
-
+/*
 void sonicRead() {
   long duration = 0; float cm_one = 0; float cm_two = 0;
   digitalWrite(sonic1_tr, LOW);
@@ -67,7 +67,7 @@ void sonicRead() {
   sonics_msg.values[1] = cm_two;
   sonicArr.publish(&sonics_msg);
 }
-
+*/
 void btRead() {
   if (btSerial.available()>3) {
     for (int i = 0; i < 3; i++) {
@@ -80,17 +80,19 @@ void btRead() {
 }
 
 void motorControl() {
-  int joyX = btData / 4; // since joystick value 0-1024
-  int joyY = 10000*(btData - (int)btData) / 4;
-  analogWrite(IN1, joyX);
+  int joyX = btData[1]; // since joystick value 0-1024
+  int joyY = btData[2];
+//  analogWrite(IN1, joyX);
+  analogWrite(IN1, 180);
   digitalWrite(IN2, LOW);
 
-  analogWrite(IN3, joyY);
+//  analogWrite(IN3, joyY);
+  analogWrite(IN3, 180);
   digitalWrite(IN4, LOW);
 }
 
 void loop() {
-  sonicRead();
+//  sonicRead();
   btRead();
   motorControl();
   nh.spinOnce();
